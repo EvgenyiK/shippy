@@ -11,3 +11,5 @@ require (
 	google.golang.org/grpc v1.30.0
 	google.golang.org/protobuf v1.24.0
 )
+
+replace github.com/EvgenyiK/shippy/shippy-service-consignment => ../shippy-service-consignment
