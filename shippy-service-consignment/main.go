@@ -13,41 +13,40 @@ import (
 	"google.golang.org/grpc/reflection"
 )
 
-
 const (
-	port=":50051"
+	port = ":50051"
 )
 
-type repository interface{
+type repository interface {
 	Create(*pb.Consignment) (*pb.Consignment, error)
 }
 
 //Репозиторий имитирующий использование хранилища данных
-type Repository struct{
-	mu sync.RWMutex
+type Repository struct {
+	mu           sync.RWMutex
 	consignments []*pb.Consignment
 }
 
 // Создать новую партию
-func (repo *Repository) Create(consignment *pb.Consigment)(*pb.Consignment, error) {
+func (repo *Repository) Create(consignment *pb.Consigment) (*pb.Consignment, error) {
 	repo.mu.Lock()
-	updated:= append(repo.consignments, consignment)
+	updated := append(repo.consignments, consignment)
 	repo.consignments = updated
 	repo.mu.Unlock()
 	return consignment, nil
 }
 
 //Сервис должен реализовывать все методы
-type service struct{
+type service struct {
 	repo repository
 }
 
 //CreateConsignment метод в сервисе , который является методом create
 //обрабатываются сервером gRPC
-func (s *service) CreateConsignment(ctx context.Context, 
-	req *pb.Consigment)(*pb.Response, error) {
+func (s *service) CreateConsignment(ctx context.Context,
+	req *pb.Consigment) (*pb.Response, error) {
 	//Сохраним партию
-	consignment,err:= s.repo.Create(req)
+	consignment, err := s.repo.Create(req)
 	if err != nil {
 		return nil, err
 	}
@@ -59,19 +58,19 @@ func (s *service) CreateConsignment(ctx context.Context,
 }
 
 func main() {
-	repo:= &Repository{}
+	repo := &Repository{}
 	//Настройка нашего сервера gRPC
-	lis,err:=net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s:= grpc.NewServer()
+	s := grpc.NewServer()
 	//Зарегистрируем наш сервер при помощи gRPC, это свяжет наш код
 	pb.RegisterShippingServiceServer(s, &service{repo})
 	reflection.Register(s)
 
 	log.Println("Running on port:", port)
-	if err:=s.Serve(lis); err != nil{
+	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
