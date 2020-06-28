@@ -8,13 +8,13 @@ import (
 
 	"context"
 
-	pb "github.com/EvgenyiK/shippy/shippy-service-consignment/proto/consignment"
 	"google.golang.org/grpc"
+	pb "shippy/shippy-service-consignment/proto/consignment"
 )
 
 const (
 	address         = "localhost:50051"
-	defaultFilename = "consigment.json"
+	defaultFilename = "consignment.json"
 )
 
 func parseFile(file string) (*pb.Consignment, error) {
