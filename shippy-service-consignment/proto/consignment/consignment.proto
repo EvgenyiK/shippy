@@ -5,6 +5,8 @@ package consignment;
 
 service ShippingService {
   rpc CreateConsignment(Consignment) returns (Response) {}
+  //Создаем новый метод
+  rpc GetConsignments(GetRequest) returns (Response){}
 }
 
 message Consignment {
@@ -22,7 +24,17 @@ message Container {
   string user_id = 4;
 }
 
+//Пустой запрос на получение
+message GetRequest{}
+
 message Response {
   bool created = 1;
   Consignment consignment = 2;
+  //Добавлено сообщение о создании груза
+  repeated Consignment consignments = 3;
 }
+/*
+ Здесь мы создали новый метод для нашего сервиса под названием GetConsignments,
+  мы также создали новый, GetRequest который пока ничего не содержит.
+   Мы также добавили consignments поле к нашему ответному сообщению.
+*/
