@@ -18,6 +18,7 @@ const (
 
 type repository interface {
 	Create(*pb.Consignment) (*pb.Consignment, error)
+	GetAll() []*pb.Consignment
 }
 
 //Репозиторий имитирующий использование хранилища данных
@@ -33,6 +34,11 @@ func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, er
 	repo.consignments = updated
 	repo.mu.Unlock()
 	return consignment, nil
+}
+
+//покажи все партии
+func (repo *Repository) GetAll() []*pb.Consignment {
+	return repo.consignments
 }
 
 //Сервис должен реализовывать все методы
@@ -54,6 +60,12 @@ func (s *service) CreateConsignment(ctx context.Context,
 	// в нашем protobuf
 
 	return &pb.Response{Created: true, Consignment: consignment}, nil
+}
+
+//GetConsignments
+func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
+	consignments := s.repo.GetAll()
+	return &pb.Response{Consignments: consignments}, nil
 }
 
 func main() {
