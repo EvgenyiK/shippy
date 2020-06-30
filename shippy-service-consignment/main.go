@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"net"
-	"shippy/shippy-service-consignment/proto/consignment"
 	"sync"
 
 	//Импортировать сгенерированный код protobuf
@@ -28,7 +27,7 @@ type Repository struct {
 }
 
 // Создать новую партию
-func (repo *Repository) Create(consignment *pb.Consigment) (*pb.Consignment, error) {
+func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, error) {
 	repo.mu.Lock()
 	updated := append(repo.consignments, consignment)
 	repo.consignments = updated
@@ -44,7 +43,7 @@ type service struct {
 //CreateConsignment метод в сервисе , который является методом create
 //обрабатываются сервером gRPC
 func (s *service) CreateConsignment(ctx context.Context,
-	req *pb.Consigment) (*pb.Response, error) {
+	req *pb.Consignment) (*pb.Response, error) {
 	//Сохраним партию
 	consignment, err := s.repo.Create(req)
 	if err != nil {

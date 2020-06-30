@@ -8,8 +8,8 @@ import (
 
 	"context"
 
+	pb "github.com/EvgenyiK/shippy/shippy-service-consignment/proto/consignment"
 	"google.golang.org/grpc"
-	pb "shippy/shippy-service-consignment/proto/consignment"
 )
 
 const (
@@ -34,7 +34,7 @@ func main() {
 		log.Fatalf("Did not connect: %v", err)
 	}
 	defer conn.Close()
-	client := pb.NewShippingSrviceClient(conn)
+	client := pb.NewShippingServiceClient(conn)
 	//Ответ от сервера
 	file := defaultFilename
 	if len(os.Args) > 1 {
