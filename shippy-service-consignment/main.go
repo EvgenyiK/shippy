@@ -7,7 +7,7 @@ import (
 
 	//Импортировать сгенерированный код protobuf
 	pb "github.com/EvgenyiK/shippy/shippy-service-consignment/proto/consignment"
-	micro   "github.com/micro/go-micro/v2"
+	   "github.com/micro/go-micro/v2"
 )
 
 
