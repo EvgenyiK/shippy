@@ -31,7 +31,7 @@ func main() {
 	//Коннектимся к серверу
 	service:=micro.NewService(micro.Name("shippy.consignment.cli"))
 	service.Init()
-	client := pb.NewShippingServiceClient("shippy.consignment.service", service.Client())
+	client := pb.NewShippingService("shippy.consignment.service", service.Client())
 	//Ответ от сервера
 	file := defaultFilename
 	if len(os.Args) > 1 {
