@@ -3,18 +3,13 @@ package main
 import (
 	"context"
 	"log"
-	"net"
-	"sync"
+	
 
 	//Импортировать сгенерированный код protobuf
 	pb "github.com/EvgenyiK/shippy/shippy-service-consignment/proto/consignment"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	   "github.com/micro/go-micro/v2"
 )
 
-const (
-	port = ":50051"
-)
 
 type repository interface {
 	Create(*pb.Consignment) (*pb.Consignment, error)
@@ -23,16 +18,13 @@ type repository interface {
 
 //Репозиторий имитирующий использование хранилища данных
 type Repository struct {
-	mu           sync.RWMutex
 	consignments []*pb.Consignment
 }
 
 // Создать новую партию
 func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, error) {
-	repo.mu.Lock()
 	updated := append(repo.consignments, consignment)
 	repo.consignments = updated
-	repo.mu.Unlock()
 	return consignment, nil
 }
 
@@ -42,46 +34,59 @@ func (repo *Repository) GetAll() []*pb.Consignment {
 }
 
 //Сервис должен реализовывать все методы
-type service struct {
+type consignmentService struct {
 	repo repository
 }
 
 //CreateConsignment метод в сервисе , который является методом create
 //обрабатываются сервером gRPC
-func (s *service) CreateConsignment(ctx context.Context,
-	req *pb.Consignment) (*pb.Response, error) {
+func (s *consignmentService) CreateConsignment(ctx context.Context,
+	req *pb.Consignment, res *pb.Response) error {
 	//Сохраним партию
 	consignment, err := s.repo.Create(req)
 	if err != nil {
-		return nil, err
+		return  err
 	}
 
 	//Возврат ответа на сообщение `Response`, которое мы создали
 	// в нашем protobuf
-
-	return &pb.Response{Created: true, Consignment: consignment}, nil
+	res.Created = true
+	res.Consignment = consignment
+	return nil
 }
 
 //GetConsignments
-func (s *service) GetConsignments(ctx context.Context, req *pb.GetRequest) (*pb.Response, error) {
+func (s *consignmentService) GetConsignments(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
 	consignments := s.repo.GetAll()
-	return &pb.Response{Consignments: consignments}, nil
+	res.Consigments = consignments
+	return nil
 }
 
 func main() {
 	repo := &Repository{}
-	//Настройка нашего сервера gRPC
-	lis, err := net.Listen("tcp", port)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	s := grpc.NewServer()
-	//Зарегистрируем наш сервер при помощи gRPC, это свяжет наш код
-	pb.RegisterShippingServiceServer(s, &service{repo})
-	reflection.Register(s)
+	//Создаем новый сервис
+	service:=micro.NewService(
+		//Это имя должно соответствовать имени пакета, указанному в вашем определении protobuf
+		micro.Name("shippy.service.consignment"),
+	)
+	// Проинициализируем командную строку
+	service.Init()
 
-	log.Println("Running on port:", port)
-	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	//Регистрация сервиса
+	if err:=pb.RegisterShippingServiceHandler(service.Server(), 
+				&consignmentService{repo});err!=nil{
+					log.Panic(err)
+				}
+	
+	//Запускаем сервер
+	if err:=service.Run();err!=nil {
+		log.Panic(err)
 	}
+	//Теперь нам нужно передать переменную окружения при запуске нашего контейнера, 
+	//чтобы определить, на каком порту работать.
+	/*
+	docker run -p 50051:50051 \
+      -e MICRO_SERVER_ADDRESS=:50051 \
+      shippy-service-consignment
+	*/			
 }
