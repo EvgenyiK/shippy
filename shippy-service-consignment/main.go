@@ -3,67 +3,20 @@ package main
 import (
 	"context"
 	"log"
-	
+	"os"
 
 	//Импортировать сгенерированный код protobuf
 	pb "github.com/EvgenyiK/shippy/shippy-service-consignment/proto/consignment"
-	   "github.com/micro/go-micro/v2"
+	vesselProto "github.com/EvgenyiK/shippy/shippy-service-vessel/proto/"
+	"github.com/micro/go-micro/v2"
 )
 
 
-type repository interface {
-	Create(*pb.Consignment) (*pb.Consignment, error)
-	GetAll() []*pb.Consignment
-}
-
-//Репозиторий имитирующий использование хранилища данных
-type Repository struct {
-	consignments []*pb.Consignment
-}
-
-// Создать новую партию
-func (repo *Repository) Create(consignment *pb.Consignment) (*pb.Consignment, error) {
-	updated := append(repo.consignments, consignment)
-	repo.consignments = updated
-	return consignment, nil
-}
-
-//покажи все партии
-func (repo *Repository) GetAll() []*pb.Consignment {
-	return repo.consignments
-}
-
-//Сервис должен реализовывать все методы
-type consignmentService struct {
-	repo repository
-}
-
-//CreateConsignment метод в сервисе , который является методом create
-//обрабатываются сервером gRPC
-func (s *consignmentService) CreateConsignment(ctx context.Context,
-	req *pb.Consignment, res *pb.Response) error {
-	//Сохраним партию
-	consignment, err := s.repo.Create(req)
-	if err != nil {
-		return  err
-	}
-
-	//Возврат ответа на сообщение `Response`, которое мы создали
-	// в нашем protobuf
-	res.Created = true
-	res.Consignment = consignment
-	return nil
-}
-
-//GetConsignments
-func (s *consignmentService) GetConsignments(ctx context.Context, req *pb.GetRequest, res *pb.Response) error {
-	consignments := s.repo.GetAll()
-	res.Consignments = consignments
-	return nil
-}
+const(
+	defaultHost = "datastore:27017"
+)
 
 func main() {
-	repo := &Repository{}
 	//Создаем новый сервис
 	service:=micro.NewService(
 		//Это имя должно соответствовать имени пакета, указанному в вашем определении protobuf
@@ -72,11 +25,25 @@ func main() {
 	// Проинициализируем командную строку
 	service.Init()
 
-	//Регистрация сервиса
-	if err:=pb.RegisterShippingServiceHandler(service.Server(), 
-				&consignmentService{repo});err!=nil{
-					log.Panic(err)
-				}
+	uri:=os.Getenv("DB_HOST")
+	if uri = "" {
+		uri = defaultHost
+	}
+
+	client,err:= CreateClient(context.Background(), uri, 0)
+	if err!=nil {
+		log.Panic(err)
+	}
+	defer client.Disconnect(context.Background())
+
+	consignmentCollection:= client.Database("shippy").Collection("Consigments")
+
+	repository:=&MongoRepository{consignmentCollection}
+	vesselClient:= vesselProto.NewVesselService("shippy.service.client", service.Client())
+	h:=&handler{repository, vesselClient}
+
+	//Регистрируем обработчики
+	pb.RegisterShippingServiceHandler(service.Server(), h)
 	
 	//Запускаем сервер
 	if err:=service.Run();err!=nil {
