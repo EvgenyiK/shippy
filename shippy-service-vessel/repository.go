@@ -29,16 +29,35 @@ func MarshalSpecification(spec *pb.Specification) *Specification{
 	}
 }
 
+func UnmarshalSpecification(spec *Specification) *pb.Specification {
+	return &pb.Specification{
+		Capacity:  spec.Capacity,
+		MaxWeight: spec.MaxWeight,
+	}
+}
+
+func MarshalVessel(vessel *pb.Vessel) *Vessel {
+	return &Vessel{
+		ID:        vessel.Id,
+		Capacity:  vessel.Capacity,
+		MaxWeight: vessel.MaxWeight,
+		Name:      vessel.Name,
+		Available: vessel.Available,
+		OwnerID:   vessel.OwnerId,
+	}
+}
+
 func UnmarshalVessel(vessel *Vessel) *pb.Vessel{
 	return &Vessel{
-		ID:	vessel.ID,
+		Id:	vessel.ID,
 		Capacity: vessel.Capacity,
 		MaxWeight:	vessel.MaxWeight,
 		Name:	vessel.Name,
 		Available:	vessel.Available,
-		OwnerID:	vessel.OwnerID,
+		OwnerId:	vessel.OwnerID,
 	}
 }
+
 
 type Vessel struct{
 	ID	string
@@ -51,12 +70,12 @@ type Vessel struct{
 
 //Если вместимость и максимальный вес ниже вместимости судна,то возвращаем его
 func (repository *MongoRepository)FindAvailable(ctx context.Context, spec *Specification) (*Vessel, error) {
-	filter:=bson.D{{
+	filter := bson.D{{
 		"capacity",
 		bson.D{{
 			"$lte",
 			spec.Capacity,
-		},{
+		}, {
 			"$lte",
 			spec.MaxWeight,
 		}},

@@ -10,7 +10,7 @@ type handler struct{
 }
 
 //найти все доступные судна
-func (s *handler) FindAvailable(ctx context.Context, req *pb.Specifications, res *pb.Response)error{
+func (s *handler) FindAvailable(ctx context.Context, req *pb.Specification, res *pb.Response)error{
 	//найти доступное судно
 	vessel, err:= s.repository.FindAvailable(ctx, MarshalSpecification(req))
 	if err != nil {

@@ -48,8 +48,8 @@ func(s *vesselService)FindAvailable(ctx context.Context, req *pb.Specification, 
 
 func main() {
 	vessels:=[]*pb.Vessel{
-		&pb.Vessel{Id:"vessel001", Name: "Boaty McBoatface", MaxWeight: 200000, Copacity: 500},
-		repo:= &VesselRepository{vessels}
+		&pb.Vessel{Id:"vessel001", Name: "Boaty McBoatface", MaxWeight: 200000, Capacity: 500},}
+		repo := &VesselRepository{vessels}
 		service:=micro.NewService(
 			micro.Name("shippy.service.vessel"),
 		)
@@ -62,7 +62,7 @@ func main() {
 		if err:=service.Run(); err != nil {
 			log.Panic(err)
 		}
-	}
+	
 }
 
 /*
