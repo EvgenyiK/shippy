@@ -24,6 +24,21 @@ services:
       MICRO_SERVER_ADDRESS: ":50051"
       DB_HOST: "mongodb://datastore:27017"
 
+  user:
+    build: ./shippy-service-user
+    ports:
+      - 50053:50051
+    environment:
+      MICRO_ADDRESS: ":50051"
+    
+  database:
+    image: postgres:alpine
+    environment:
+      POSTGRES_PASSWORD: "password"
+      POSTGRES_USER: "admin"
+    ports:
+      - 5432:5432    
+
   # Commands
   cli:
     build: ./shippy-cli-consignment
